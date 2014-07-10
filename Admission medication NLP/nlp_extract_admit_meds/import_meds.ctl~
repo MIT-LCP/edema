@@ -1,0 +1,10 @@
+--options (skip=5)
+load data
+infile 'drugs.txt'
+replace into table djscott.caseid_map
+fields terminated by "|"
+trailing nullcols  (
+    SUBJECT_ID,
+    TYPE,
+    MEDICATION
+)

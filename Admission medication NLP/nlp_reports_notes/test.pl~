@@ -1,0 +1,25 @@
+#!/usr/bin/perl -w
+
+use Test::Simple tests => 1;
+
+use ProcessDischargeSummary;
+
+open (MYFILE, 'test_discharge_summaries/1.txt');
+my $dc_sum = "";
+while (<MYFILE>) {
+    $dc_sum .= $_;
+}
+
+print $dc_sum;
+
+my $ref = {};
+
+$ref->{'text'} = $dc_sum;
+$ref->{'subject_id'} = 3;
+$ref->{'hadm_id'} = 2075;
+
+my %disch_sum_results = proc_disch_sum($ref);
+
+use Data::Dumper;
+Dump(%disch_sum_results);
+ok( $foo eq $bar, 'foo is bar' );

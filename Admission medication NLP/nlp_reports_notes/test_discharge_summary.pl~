@@ -1,0 +1,148 @@
+#!/usr/bin/perl -w
+
+use Test::More tests => 10;
+use Data::Dumper;
+use ProcessMIMICText;
+
+my @admission_drugs = [
+          'VANCOMYCIN',
+          'LEVOFLOXACIN',
+          'METRONIDAZOLE',
+          'HEPARIN',
+          'SIMVASTATIN',
+          'LISINOPRIL',
+          'FUROSEMIDE',
+          'ATENOLOL',
+          'PANTOPRAZOLE',
+          'ASCORBIC',
+          'INSULIN',
+          'BISACODYL',
+          'DOCUSATE',
+          'PERCOCET',
+          'ASPIRIN',
+          'METOPROLOL'
+        ];
+
+open (MYFILE, 'test_discharge_summaries/1.txt');
+my $dc_sum = "";
+while (<MYFILE>) {
+    $dc_sum .= $_;
+}
+
+my $ref = {};
+
+$ref->{'text'} = $dc_sum;
+$ref->{'subject_id'} = 3;
+$ref->{'hadm_id'} = 2075;
+
+my %disch_sum_results = proc_disch_sum($ref);
+
+is($disch_sum_results{'subject_id'}, 3, 'Subject ID correct' );
+
+#print Dumper(%disch_sum_results);
+
+is_deeply( \@{$disch_sum_results{'admission_drugs'}}, @admission_drugs, 'Admission drugs match' );
+
+my @discharge_drugs = [
+           'AMIODARONE',
+           'METOPROLOL',
+           'CAPTOPRIL',
+           'ASPIRIN',
+           'PANTOPRAZOLE',
+           'HEPARIN',
+           'ZINC',
+           'SULFATE',
+           'IPRATROPIUM',
+           'NEBULIZERS',
+           'ACETAMINOPHEN',
+           'MICONAZOLE',
+           'SANTYL',
+           'INSULIN'
+         ];
+
+is_deeply( \@{$disch_sum_results{'discharge_drugs'}}, @discharge_drugs, 'Discharge drugs match' );
+
+my $admission_drugs_section_text = 'MEDICATIONS ON ADMISSION:
+ 1.  Vancomycin 1 g intravenously q.24h. for a level of less
+than 15 (started on [**2682-8-22**]).
+ 2.  Levofloxacin 250 mg p.o. q.d. (started on [**2682-8-22**]).
+ 3.  Metronidazole 500 mg p.o. q.8h. (started on [**2682-8-22**]).
+ 4.  Heparin 5000 units subcutaneous b.i.d.
+ 5.  Simvastatin 40 mg p.o. q.d.
+ 6.  Lisinopril 5 mg p.o. q.d.
+ 7.  Furosemide 40 mg p.o. q.d.
+ 8.  Vitamin E 400 IU p.o. q.d.
+ 9.  Atenolol 25 mg p.o. q.d.
+10.  Pantoprazole 40 mg p.o. q.d.
+11.  Ascorbic acid 500 mg p.o. b.i.d.
+12.  NPH 17 units b.i.d.
+13.  Regular insulin sliding-scale.
+14.  Bisacodyl 10 mg p.o./p.r. as needed.
+15.  Docusate 100 mg p.o. b.i.d.
+16.  Percocet 5/325 mg one tablet p.o. q.4-6h. as needed for
+pain.
+17.  Aspirin 81 mg p.o. q.d.
+18.  Metoprolol 75 mg p.o. b.i.d.
+
+';
+
+is( $disch_sum_results{'admission_medications_section_text'}, $admission_drugs_section_text, 'Admission drugs section extraction' );
+
+my $discharge_drugs_section_text = 'MEDICATIONS ON DISCHARGE:
+ 1.  Amiodarone 400 mg p.o. b.i.d. (through [**2682-9-20**]), then 400 mg p.o. q.d. (times one week), then 200 mg
+p.o. q.d.
+ 2.  Metoprolol 50 mg p.o. b.i.d.
+ 3.  Captopril 6.25 mg p.o. t.i.d.
+ 4.  Aspirin 325 mg p.o. q.d.
+ 5.  Pantoprazole 40 mg p.o. q.d.
+ 6.  Heparin 5000 units subcutaneously b.i.d.
+ 7.  Multivitamin one tablet p.o. q.d.
+ 8.  Zinc sulfate 220 mg p.o. q.d.
+ 9.  Vitamin C 500 mg p.o. q.d.
+10.  Ipratropium nebulizers q.4-6h. as needed (for wheezing).
+11.  Acetaminophen 325 mg to 650 mg p.o. q.4-6h. as needed
+(for pain).
+12.  Miconazole 2% powder to groin b.i.d.
+13.  Santyl lotion to heels b.i.d.
+14.  Regular insulin sliding-scale.
+
+';
+
+is( $disch_sum_results{'discharge_medications_section_text'}, $discharge_drugs_section_text, 'Discharge drugs section extraction' );
+
+is( $disch_sum_results{'transfer_medications_section_text'}, undef, 'Transfer drugs section extraction' );
+
+is( $disch_sum_results{'num_sections'}, 26, 'Number of sections matches' );
+
+is( $disch_sum_results{'code_status_section_text'}, 'CODE STATUS:  Do not resuscitate/do not intubate.
+
+', 'Code status section');
+
+my @code_status = [
+           'DNI',
+           'DNR',
+];
+
+is_deeply( \@{$disch_sum_results{'code_status'}}, @code_status, 'Code status matches' );
+
+#print Dumper(\@{$disch_sum_results{'code_status'}});
+
+is( $disch_sum_results{'service'}, 'medical', 'Service type section');
+
+open (MYFILE, 'test_discharge_summaries/10057.txt');
+my $dc_sum = "";
+while (<MYFILE>) {
+    $dc_sum .= $_;
+}
+
+my $ref = {};
+
+$ref->{'text'} = $dc_sum;
+$ref->{'subject_id'} = 3;
+$ref->{'hadm_id'} = 2075;
+
+my %disch_sum_results = proc_disch_sum($ref);
+
+is($disch_sum_results{'subject_id'}, 3, 'Subject ID correct' );
+is($disch_sum_results{'hadm_id'}, 3, 'Admission ID correct' );
+is($disch_sum_results{'num_sections'}, 26, 'Number of sections matches' );

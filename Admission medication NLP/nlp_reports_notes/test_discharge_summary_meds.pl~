@@ -1,0 +1,65 @@
+#!/usr/bin/perl -w
+
+use Test::More tests => 3;
+use Data::Dumper;
+use ProcessMIMICText;
+
+my @admission_drugs = [
+          'VANCOMYCIN',
+          'LEVOFLOXACIN',
+          'METRONIDAZOLE',
+          'HEPARIN',
+          'SIMVASTATIN',
+          'LISINOPRIL',
+          'FUROSEMIDE',
+          'ATENOLOL',
+          'PANTOPRAZOLE',
+          'ASCORBIC',
+          'INSULIN',
+          'BISACODYL',
+          'DOCUSATE',
+          'PERCOCET',
+          'ASPIRIN',
+          'METOPROLOL'
+        ];
+
+open (MYFILE, 'test_discharge_summaries/1.txt');
+my $dc_sum = "";
+while (<MYFILE>) {
+    $dc_sum .= $_;
+}
+
+my $ref = {};
+
+$ref->{'text'} = $dc_sum;
+$ref->{'subject_id'} = 3;
+$ref->{'hadm_id'} = 2075;
+
+my %disch_sum_results = proc_disch_sum($ref);
+
+ok( 3 eq %disch_sum_results->{'subject_id'}, 'Subject ID correct' );
+
+print Dumper(%disch_sum_results);
+
+is_deeply( \@{%disch_sum_results->{'admission_drugs'}}, @admission_drugs, 'Admission drugs match' );
+
+my @discharge_drugs = [
+           'AMIODARONE',
+           'METOPROLOL',
+           'CAPTOPRIL',
+           'ASPIRIN',
+           'PANTOPRAZOLE',
+           'HEPARIN',
+           'ZINC',
+           'SULFATE',
+           'IPRATROPIUM',
+           'NEBULIZERS',
+           'ACETAMINOPHEN',
+           'MICONAZOLE',
+           'SANTYL',
+           'INSULIN'
+         ];
+
+is_deeply( \@{%disch_sum_results->{'discharge_drugs'}}, @discharge_drugs, 'Discharge drugs match' );
+
+print %disch_sum_results->{'admission_drugs_section'};

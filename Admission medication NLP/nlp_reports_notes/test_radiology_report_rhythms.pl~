@@ -1,0 +1,23 @@
+#!/usr/bin/perl -w
+
+use Test::More tests => 3;
+use Data::Dumper;
+use ProcessMIMICText;
+
+my @rhythms = [
+          'supraventricular_rhythm'
+        ];
+
+my $report = "SUPRAVENTRICULAR RHYTHM";
+
+my $ref = {};
+
+$ref->{'text'} = $report;
+$ref->{'subject_id'} = 3;
+$ref->{'hadm_id'} = 2075;
+
+my @report_rhythms = get_rhythm_from_radiology_report($ref);
+
+print Dumper(@report_rhythms);
+
+is_deeply( @report_rhythms, @rhythms, 'Rhythm correctly extracted' );
