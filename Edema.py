@@ -2,6 +2,7 @@
 import numpy
 import random
 import pylab
+#import statistics
 
 def readResults(filename):
     """
@@ -26,7 +27,9 @@ def readResults(filename):
     MissingHistory = 0
     for line in lines:
         cur = line.split(",")
-        if cur[1] == '1':
+        if cur[3] == '-1':
+            MissingHistory += 1           
+        elif cur[1] == '1':
             if cur[2] == '0':
                 Counts["PulmOnly"] += 1
                 IDnums["CPulmOnly"].append(cur[0])
@@ -59,21 +62,49 @@ def readResults(filename):
             else:
                 MissingInfo["PeriOnly"] += 1
                 IDnums["MIPeriOnly"].append(cur[0])
-        if cur[3] == '-1':
-            MissingHistory += 1
+##        if cur[3] == '-1':
+##            MissingHistory += 1
 
  #   print len(IDnums["CPeriOnly"])
     print Counts, MissingInfo, MissingHistory
     return Counts, MissingInfo, MissingHistory
 
-##Results:
-##Counts({'Both': 615, 'Neither': 12016, 'PeriOnly': 1544, 'PulmOnly': 2002},
-##MissingInfo{'PulmOnly': 178, 'PeriOnly': 286, 'NoKnownPulm': 1606, 'Neither': 5264, 'NoKnownPeri': 2511},
-##NoHistory 5199, (can we compare this to known addendums?)
-##HasSwelling 39)
+#readResults("dsfullsetoutput.csv")
 
-readResults("rerun2_73.csv")
+##Results:
+##Counts({'Both': 838, 'Neither': 12705, 'PeriOnly': 2011, 'PulmOnly': 1904})
+##MissingInfo({'PulmOnly': 137, 'PeriOnly': 52, 'NoKnownPulm': 1512,
+##'Neither': 724, 'NoKnownPeri': 762})
+## No History: 5377
+
+#readResults("rerun2_73.csv")
 #readResults("7.3rerun(1).csv")
+
+def readAddendums(filename):
+    """
+    Reads the textfile named 'filename',
+    Categorizes each patient into one of four categories:
+    (1) Peripheral but not pulmonary edema
+    (2) Peripheral and pulmonary edema
+    (3) Both peripheral and pulmonary edema
+    (4) Neither peripheral nor pulmonary edema
+    etc.
+    or puts into Nulls (one of the terms wasn't recovered)--MissingInfo
+    
+    Returns a set of counts
+    """
+    dataFile = open(filename, "r")
+    lines=[]
+    for line in dataFile.readlines():
+        lines.append(line.strip())
+    addendums = 0
+    for line in lines:
+        cur = line.split(",")
+        if cur[1] == " 1":
+            addendums += 1
+    print addendums
+readAddendums("addendum_data.txt")
+        
 def buildDict(filename):
     """
     Using file filename, writes a dictionary matching correct values
@@ -113,21 +144,34 @@ def testRun(numTrials, numCases, correctFile, testFile):
     testDict = buildDict(testFile)
     accuracy = []
     for trial in range(numTrials):
-            wrongPts = []
-            numCorrect = 0
+        wrongPts = []
+        numCorrect = 0
         
-            for i in range(numCases):
-                value = random.choice(testDict.keys())
-                if testDict[value] == correctDict[value]:
-                    numCorrect += 1
-                else:
-                    wrongPts.append(value)
-            accuracy.append(float(numCorrect)/numCases) 
+        for i in range(numCases):
+            value = random.choice(testDict.keys())
+            if testDict[value] == correctDict[value]:
+                numCorrect += 1
+            else:
+                wrongPts.append(value)
+        accuracy.append(float(numCorrect)/numCases)
+
+    sortedaccuracy = sorted(accuracy)
+    print numCases
+    print "median",numpy.median(sortedaccuracy)
+    print "25",numpy.percentile(sortedaccuracy,25)
+    print "75",numpy.percentile(sortedaccuracy,75)
+    print "mean",numpy.average(sortedaccuracy)
+    print "stdev",numpy.std(sortedaccuracy)
  
     pylab.hist(accuracy, bins = 10)
+    pylab.suptitle('Bootstrapping with 400 Patient Samples, 10,000 Trials')
+    pylab.xlabel('Accuracy')
+    pylab.ylabel('Number of Trials') 
     xmin, xmax = pylab.xlim()
 
     pylab.show()
+#testRun(10000, 400, "Corrected_Data.csv", "big_tested_set.csv")
+#testRun(10000, 600, "big_tested_set.csv", "rerun_bigtestedset.csv")
 
 
 def testManyTrials(numTrials, correctFile, testFile):
@@ -143,19 +187,19 @@ def testManyTrials(numTrials, correctFile, testFile):
     accuracy = {}
     numCases = [100,200,300,400]
 
-    for j in range(len(numCases)):
+    for j in range(len(numCases)):#either 100, 200, 300 or 400
         accuracy[j] = []
         for trial in range(numTrials):
             wrongPts = []
             numCorrect = 0
-            for i in range(numCases[j]):#either 100, 200, 300 or 400
+            for i in range(numCases[j]):
                 value = random.choice(testDict.keys())
                 if testDict[value] == correctDict[value]:
                     numCorrect += 1
                 else:
                     wrongPts.append(value)
                 accuracy[j].append(float(numCorrect)/numCases[j])
-
+    print accuracy
 
     
     pylab.hist(accuracy[0], bins = 10)
