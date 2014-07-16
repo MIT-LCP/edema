@@ -1,10 +1,11 @@
 ######Author: SusanCav
-import numpy
+import numpy as np
 import random
 import pylab
+#import scipy.stats
 #import statistics
 
-def readResults(filename):
+def readResults(filename, neonates):
     """
     Reads the textfile named 'filename',
     Categorizes each patient into one of four categories:
@@ -22,53 +23,63 @@ def readResults(filename):
     for line in dataFile.readlines():
         lines.append(line.strip())
     Counts = {"PeriOnly": 0, "Both":0, "Neither":0, "PulmOnly":0}
-    IDnums = {"CPeriOnly":[], "CBoth": [], "CNeither":[],"CPulmOnly":[], "MIPeriOnly":[], "MIPulmOnly":[], "MINoKnownPeri":[], "MINoKnownPulm":[], "MINeither":[]}
+    IDnums = {"CPeriOnly":[], "CBoth": [], "CNeither":[],"CPulmOnly":[], "MIPeriOnly":[],
+              "MIPulmOnly":[], "MINoKnownPeri":[], "MINoKnownPulm":[], "MINeither":[]}
     MissingInfo = {"PeriOnly":0, "PulmOnly":0, "NoKnownPeri":0, "NoKnownPulm":0, "Neither":0}
+    MissingExam = []
     MissingHistory = 0
     for line in lines:
         cur = line.split(",")
-        if cur[3] == '-1':
-            MissingHistory += 1           
-        elif cur[1] == '1':
-            if cur[2] == '0':
-                Counts["PulmOnly"] += 1
-                IDnums["CPulmOnly"].append(cur[0])
-            elif cur[2] == '1':
-                Counts["Both"] += 1
-                IDnums["CBoth"].append(cur[0])
+        if cur[0] not in neonates.keys():
+            if cur[3] == '-1':
+                MissingHistory += 1
+                MissingExam.append(cur[0])
+            elif cur[1] == '1':
+                if cur[2] == '0':
+                    Counts["PulmOnly"] += 1
+                    IDnums["CPulmOnly"].append(cur[0])
+                elif cur[2] == '1':
+                    Counts["Both"] += 1
+                    IDnums["CBoth"].append(cur[0])
             #if cur[2] == -1:
-            else:
-                MissingInfo["PulmOnly"] += 1
-                IDnums["MIPulmOnly"].append(cur[0])
-        elif cur[1] == '0':
-            if cur[2] == '0':
-                Counts["Neither"] +=1
-                IDnums["CNeither"].append(cur[0])
-            elif cur[2] == '1':
-                Counts["PeriOnly"] += 1
-                IDnums["CPeriOnly"].append(cur[0])
+                else:
+                    MissingInfo["PulmOnly"] += 1
+                    IDnums["MIPulmOnly"].append(cur[0])
+            elif cur[1] == '0':
+                if cur[2] == '0':
+                    Counts["Neither"] +=1
+                    IDnums["CNeither"].append(cur[0])
+                elif cur[2] == '1':
+                    Counts["PeriOnly"] += 1
+                    IDnums["CPeriOnly"].append(cur[0])
             #if cur[2] == -1:
-            else:
-                MissingInfo["NoKnownPulm"] += 1
-                IDnums["MINoKnownPulm"].append(cur[0])
-        elif cur[1] == '-1':
-            if cur[2] == '-1':
-                MissingInfo["Neither"] += 1
-                IDnums["MINeither"].append(cur[0])
-            elif cur[2] == '0':
-                MissingInfo["NoKnownPeri"] += 1
-                IDnums["MINoKnownPeri"].append(cur[0])
+                else:
+                    MissingInfo["NoKnownPulm"] += 1
+                    IDnums["MINoKnownPulm"].append(cur[0])
+            elif cur[1] == '-1':
+                if cur[2] == '-1':
+                    MissingInfo["Neither"] += 1
+                    IDnums["MINeither"].append(cur[0])
+                elif cur[2] == '0':
+                    MissingInfo["NoKnownPeri"] += 1
+                    IDnums["MINoKnownPeri"].append(cur[0])
             #if cur[2] == 1:
-            else:
-                MissingInfo["PeriOnly"] += 1
-                IDnums["MIPeriOnly"].append(cur[0])
+                else:
+                    MissingInfo["PeriOnly"] += 1
+                    IDnums["MIPeriOnly"].append(cur[0])
 ##        if cur[3] == '-1':
 ##            MissingHistory += 1
 
  #   print len(IDnums["CPeriOnly"])
-    print Counts, MissingInfo, MissingHistory
+##    print Counts, MissingInfo, MissingHistory
+##    randomsample = []
+##    5
+##    for i in range(100):
+##        value = random.choice(MissingExam)
+##        randomsample.append(value)
+##    print randomsample    
+##    return Counts, MissingInfo, MissingHistory
     return Counts, MissingInfo, MissingHistory
-
 #readResults("dsfullsetoutput.csv")
 
 ##Results:
@@ -77,9 +88,148 @@ def readResults(filename):
 ##'Neither': 724, 'NoKnownPeri': 762})
 ## No History: 5377
 
-#readResults("rerun2_73.csv")
-#readResults("7.3rerun(1).csv")
+def removeNeonates(file1):
+    dataFile = open(file1, "r")
+    lines=[]
+    for line in dataFile.readlines():
+        lines.append(line.strip())
+    addendums = 0
+    neonates = {}
+    for line in lines:
+        cur = line.split(",")
+        neonates[cur[2]] = "1"
+    return neonates
 
+        
+
+def getAverage(file1):
+    """
+    Reads full length chart (for looking at Joon's data along with edema)
+    """
+#AGE_FIRST_ICUSTAY
+#GENDER
+#FIRST_ICU_LOS
+#ICUSTAY_FIRST_SERVICE
+#FIRST_ICUSTAY_ADMIT_SAPS
+#VASOPRESSOR_FIRST_ICUSTAY
+#TOTAL_SAPS_FIRST_ICUSTAY
+    dataFile = open(file1, "r")
+    lines=[]
+    for line in dataFile.readlines():
+        lines.append(line.strip())
+    addendums = 0
+    data = {}
+    for line in lines:
+        cur = line.split(",")
+        curvalues = {}
+        curvalues["pulm"] = cur[1]
+        curvalues["peri"] = cur[2]
+        curvalues["exam"] = cur[3]
+        data[cur[0]] = curvalues
+##      
+##    dataFile = open(file2, "r")
+##    lines=[]
+##    for line in dataFile.readlines():
+##        lines.append(line.strip())
+##    addendums = 0
+##    for line in lines:
+##        cur = line.split(",")
+##        
+##        try:
+##            current = data[cur[0]]
+##          #  print cur
+##          #  print data["2075"]
+##            current["ICU_Mort"] = cur[4]
+##            current["Service"] = cur[12]
+##            current["Age"] = float(cur[8])
+##            current["Gender"] = cur[9]
+##            current["Race"] = cur[10]
+##            current["LOS"]= float(cur[11])
+##            current["ninezeroMort"] = cur[20] #not sure
+##            try:
+##                current["SAPS"] = float(cur[13])
+##            except ValueError:
+##                continue
+##            data[cur[0]] = current
+##        except KeyError:
+##            continue
+##    #make sure this works okay
+    return data
+# removeNeonates("export.csv")
+print readResults("dsfullsetoutput (2).csv", removeNeonates("export.csv"))
+
+
+
+def evalData(data):
+    gender = {'M': 0, 'F': 0}
+    service = {'MICU':0, 'CCU':0}
+    age = []
+    race = {}
+    los = []
+    SAPS = []
+    ICU_mort = {'Y':0, 'N':0}
+    pulm = {'0':0,'1':0}
+    ngender = {'M': 0, 'F': 0}
+    nservice = {'MICU':0, 'CCU':0}
+    nage = []
+    nrace = {}
+    nlos = []
+    nSAPS = []
+    nICU_mort = {'Y':0, 'N':0}
+    npulm = {'0':0,'1':0}
+    
+    for key in data.keys():
+        if data[key]['exam'] != '-1':
+            cur = data[key]
+            try:
+                if cur['peri'] == '1':
+                    gender[cur['Gender']] += 1
+   #             service[cur['Service']] += 1
+                    age.append(cur['Age'])
+  #              race[cur['Race']] += 1
+                    los.append(cur['LOS'])
+                    try:
+                        SAPS.append(cur['SAPS'])
+                    except KeyError:
+                        continue
+                    ICU_mort[cur['ICU_Mort']] +=1
+                    pulm[cur['pulm']] +=1
+                elif cur['peri'] == '0':
+                    ngender[cur['Gender']] += 1
+   #             nservice[cur['Service']] +=1
+                    nage.append(cur['Age'])
+   #             nrace[cur['Race']] +=1
+                    nlos.append(cur['LOS'])
+                    try:
+                        nSAPS.append(cur['SAPS'])
+                    except KeyError:
+                        continue
+                    nICU_mort[cur['ICU_Mort']] +=1
+                    npulm[cur['pulm']] +=1
+            except KeyError:
+                continue
+        
+    print np.average(age)
+    print np.std(age)
+    print len(age)
+
+    print np.average(nage)
+    print np.std(nage)
+    print len(nage)
+            
+#evalData(getAverage("dsfullsetoutput (2).csv","revisedMIMICII.csv"))          
+        
+##        ###Get Avg Age
+##        print cur[12]
+##        if cur[2] == "1":
+##                hasedema.append(float(cur[12]))
+##        elif cur[2] == "0":
+##                noedema.append(float(cur[12]))
+##    age_edema = numpy.average(hasedema)
+##    age_noedema = numpy.average(noedema)
+##
+##    print scipy.stats.ttest_ind(noedema, hasedema)
+##
 def readAddendums(filename):
     """
     Reads the textfile named 'filename',
@@ -103,7 +253,7 @@ def readAddendums(filename):
         if cur[1] == " 1":
             addendums += 1
     print addendums
-readAddendums("addendum_data.txt")
+#readAddendums("addendum_data.txt")
         
 def buildDict(filename):
     """
