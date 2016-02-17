@@ -1,9 +1,0 @@
-10050|discharge|PROTONIX
-10053|admission|LASIX
-10057|admission|HCTZ
-10057|admission|OMEPRAZOLE
-10061|admission|LASIX
-10061|admission|PROTONIX
-10061|discharge|SPIRONOLACTONE
-10061|discharge|PROTONIX
-10061|discharge|LASIX
